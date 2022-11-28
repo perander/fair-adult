@@ -1,6 +1,6 @@
 #%%
 import pandas as pd
-
+import numpy as np
 #%%
 def preprocess(df, categorical_variables):
     for col in df.columns:
@@ -42,3 +42,26 @@ def load_adult():
 #%%
 adult_train, adult_test = load_adult()
 print(adult_train.shape)
+
+#%%
+train_X = adult_train.drop('income', axis=1)
+train_Y = adult_train['income']
+test_X = adult_test.drop('income', axis=1)
+test_Y = adult_test['income']
+
+print(train_X.shape)
+print(train_Y.shape)
+print(test_X.shape)
+print(test_Y.shape)
+
+train_X = np.array(train_X, dtype=np.float32)
+test_X = np.array(test_X, dtype=np.float32)
+train_Y = np.array(train_Y, dtype=np.int32)
+test_Y = np.array(test_Y, dtype=np.int32)
+#%%
+
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(max_depth=10, random_state=0)
+model.fit(train_X, train_Y)
+print(model.score(test_X, test_Y))
