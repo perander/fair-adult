@@ -71,38 +71,6 @@ test_Y = np.array(test_Y, dtype=np.int32)
 #%%
 
 from sklearn.ensemble import RandomForestClassifier
-
-<<<<<<< HEAD
-model = RandomForestClassifier(max_depth=10, random_state=0)
-model.fit(train_X, train_Y)
-print(model.score(test_X, test_Y))
-
-#%%
-
-filename = 'https://raw.githubusercontent.com/jbrownlee/Datasets/master/adult-all.csv'
-
-data = pd.read_csv(filename, header=None, na_values='?')
-
-#%%
-data = data.dropna()
-
-print(data.shape)
-
-#%%
-
-occupationcounts = data[6].value_counts()
-
-#%%
-
-import matplotlib.pyplot as plt
-
-fig = plt.figure(figsize= (25, 10))
-
-plt.bar(data[6], edgecolor='black', linewidth=1.2)
-plt.xticks(fontsize=20, rotation = 45)
-#%%
-data
-=======
 for i in range(19,20):
     model = RandomForestClassifier(max_depth=i, random_state=0)
     model.fit(train_X, train_Y)
@@ -134,4 +102,3 @@ print(df)
 
 #%%
 df.to_csv("predictions.csv", index=False)
->>>>>>> d35a25e6d086ed9a7cfbee2fc204bac44d360c45
