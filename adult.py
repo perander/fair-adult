@@ -7,12 +7,14 @@ def preprocess(df, categorical_variables):
         if df[col].isnull().values.any():
             df = df[col].fillna(df[col].mode()[0])
 
+    orig_df = df
+
     for col in categorical_variables:
         df = pd.concat([df, pd.get_dummies(df[col], prefix=col)], axis=1)
 
     df = df.drop(labels=categorical_variables, axis=1)
 
-    return df
+    return df, orig_df
 
 #%%
 def load_adult():
@@ -30,7 +32,7 @@ def load_adult():
 
     categorical_variables = ['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'native-country']
 
-    adult = preprocess(adult, categorical_variables)
+    adult, orig_adult = preprocess(adult, categorical_variables)
 
     adult_train = adult.iloc[:adult_train_og_dim[0], :]
     adult_test = adult.iloc[adult_train_og_dim[0]:, :]
@@ -38,10 +40,18 @@ def load_adult():
     adult_train = adult_train.replace([' <=50K', ' >50K'],[1,0])
     adult_test = adult_test.replace([' <=50K.', ' >50K.'],[1,0])
 
-    return adult_train, adult_test
+    orig_adult_train = orig_adult.iloc[:adult_train_og_dim[0], :]
+    orig_adult_test = orig_adult.iloc[adult_train_og_dim[0]:, :]
+
+    orig_adult_train = orig_adult_train.replace([' <=50K', ' >50K'],[1,0])
+    orig_adult_test = orig_adult_test.replace([' <=50K.', ' >50K.'],[1,0])
+
+    return adult_train, adult_test, orig_adult_train, orig_adult_test
 #%%
-adult_train, adult_test = load_adult()
+adult_train, adult_test, orig_adult_train, orig_adult_test = load_adult()
 print(adult_train.shape)
+print(orig_adult_train.shape)
+print(orig_adult_test.shape)
 
 #%%
 train_X = adult_train.drop('income', axis=1)
@@ -62,6 +72,7 @@ test_Y = np.array(test_Y, dtype=np.int32)
 
 from sklearn.ensemble import RandomForestClassifier
 
+<<<<<<< HEAD
 model = RandomForestClassifier(max_depth=10, random_state=0)
 model.fit(train_X, train_Y)
 print(model.score(test_X, test_Y))
@@ -91,3 +102,36 @@ plt.bar(data[6], edgecolor='black', linewidth=1.2)
 plt.xticks(fontsize=20, rotation = 45)
 #%%
 data
+=======
+for i in range(19,20):
+    model = RandomForestClassifier(max_depth=i, random_state=0)
+    model.fit(train_X, train_Y)
+    pred = model.predict(test_X)
+    print(i, model.score(test_X, test_Y))
+
+#%%
+print(adult_train.columns)
+
+#%%
+print(pred.shape)
+print(test_X.shape)
+print(test_Y.shape)
+pred = pred[:, np.newaxis]
+test_Y = test_Y[:,np.newaxis]
+
+#%%
+orig_prediction = np.concatenate((pred, test_Y), axis=1)
+orig_prediction = np.concatenate((orig_prediction, orig_adult_test.drop("income", axis=1)), axis=1)
+
+print(orig_prediction.shape)
+#%%
+cols = orig_adult_test.drop("income", axis=1).columns
+cols = np.concatenate((np.array(["score", "label_value"]), cols))
+print(cols)
+#%%
+df = pd.DataFrame(orig_prediction, columns=cols)
+print(df)
+
+#%%
+df.to_csv("predictions.csv", index=False)
+>>>>>>> d35a25e6d086ed9a7cfbee2fc204bac44d360c45
