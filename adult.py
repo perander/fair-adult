@@ -80,7 +80,7 @@ def preferential_resampling(dataset, s_names, x_name, y_name='income'):
     values = dataset[x_name].unique()
     
     for i, value in enumerate(sorted(values)):
-        print(f"{i+1}/{len(values)}, value", value)
+        # print(f"{i+1}/{len(values)}, value", value)
         dataset_with_value = dataset[dataset[x_name] == value]
 
         # get protected groups (e.g. get groups of males and females)
@@ -93,7 +93,7 @@ def preferential_resampling(dataset, s_names, x_name, y_name='income'):
         
         # if all but one group are empty, skip preprocessing for that value
         if lens.count(0) >= len(groups)-1:
-            print("did not do any preprocessing")
+            # print("did not do any preprocessing")
             continue
         
         # calculate the ratio of >50K (1) and <=50K (0) for each group (e.g. males and females)
@@ -112,15 +112,17 @@ def preferential_resampling(dataset, s_names, x_name, y_name='income'):
         avg = np.mean(ratios)
 
         # for each group, replace either rich with poor or vice versa, so that the ratios are as similar as possible
+        groups_preprocessed = []
         for i, group in enumerate(groups):
             rich = group[group[y_name] == 1]
             poor = group[group[y_name] == 0]
             n_rich = rich.shape[0]
             ratio = ratios[i]
 
+            # print(group.shape[0])
             # either nobody is rich or nobody is poor: cannot duplicate people from an empty group
             if ratio == 0.0 or ratio == 1.0:
-                print("group has only rich or only poor people, did not preprocess")
+                # print("group has only rich or only poor people, did not preprocess")
                 continue
 
             # how many rows should be replaced (how far the group's ratio is from the average ratio)
@@ -150,16 +152,72 @@ def preferential_resampling(dataset, s_names, x_name, y_name='income'):
             group_preprocessed = pd.concat([rich_preprocessed, poor_preprocessed], axis=0)
             ratio_preprocessed = group_preprocessed[group_preprocessed[y_name] == 1].shape[0]/group_preprocessed.shape[0]
 
-            print("ratio goal\t", avg)
-            print("ratio after\t", ratio_preprocessed)
+            groups_preprocessed.append(group_preprocessed)
+
+            # print("ratio goal\t", avg)
+            # print("ratio after\t", ratio_preprocessed)
+
+            # print(group_preprocessed.index)
         
-            # TODO replace the original group in the dataset with the preprocessed group
+    # TODO replace the original group in the dataset with the preprocessed group
+    # TODO problem with duplicate indices. We want to replace by index, but after that the df could be reindexed? not solved yet
 
-            # TODO return preprocessed dataset
+    # dataset = dataset.loc[group_preprocessed.index, :] = group_preprocessed
+    # dataset = dataset.reset_index(drop=True)
+
+    return dataset
 
 
-print(preferential_resampling(adult_train, ['sex_ Male', 'sex_ Female'], 'hours-per-week', 'income'))
-# TODO: try with other s than male and female
+sex_variables = ['sex_ Male', 'sex_ Female']
+race_variables = [
+    'race_ Amer-Indian-Eskimo', 
+    'race_ Other', 
+    'race_ Asian-Pac-Islander', 
+    'race_ White', 
+    'race_ Black'
+]
+marital_status_variables = [
+    'marital-status_ Never-married',
+    'marital-status_ Married-AF-spouse',
+    'marital-status_ Married-civ-spouse',
+    'marital-status_ Married-spouse-absent',
+    'marital-status_ Divorced',
+    'marital-status_ Separated',
+    'marital-status_ Widowed'
+]
+relationship_variables = [
+    'relationship_ Husband',
+    'relationship_ Not-in-family',
+    'relationship_ Other-relative',
+    'relationship_ Own-child',
+    'relationship_ Unmarried',
+    'relationship_ Wife',
+]
+
+non_sensitive_variables = [
+    'hours-per-week',
+    'education-num',
+    'capital-gain'
+]
+sensitive_variables = [
+    sex_variables,
+    marital_status_variables,
+    relationship_variables,
+    race_variables
+]
+
+# print(adult_train.shape)
+# print(sum(adult_train.duplicated()))
+# adult_train = adult_train.reset_index(drop=True)
+# print(sum(adult_train.duplicated()))
+
+for sensitive in sensitive_variables:
+    for non_sensitive in non_sensitive_variables:
+        adult_train = preferential_resampling(adult_train, sensitive, non_sensitive, 'income')
+    
+# print(adult_train.shape)
+# print(sum(adult_train.duplicated()))
+
 
 #%%
 
