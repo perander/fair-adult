@@ -34,6 +34,8 @@ def load_adult():
     categorical_variables = ['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'native-country']
 
     adult, orig_adult = preprocess(adult, categorical_variables)
+    adult = adult.drop('fnlwgt', axis=1)
+    orig_adult = orig_adult.drop('fnlwgt', axis=1)
 
     adult_train = adult.iloc[:adult_train_og_dim[0], :]
     adult_test = adult.iloc[adult_train_og_dim[0]:, :]
@@ -141,19 +143,13 @@ def preferential_resampling(dataset, s_names, x_name, y_name='income'):
             # print("ratio goal\t", avg)
             # print("ratio after\t", ratio_preprocessed)
 
-            # print(group_preprocessed.index)
-        
-            # TODO replace the original group in the dataset with the preprocessed group
-            # TODO problem with duplicate indices. We want to replace by index, but after that the df could be reindexed? maybe solved
-
-            print("before replacement", dataset.shape)
+            # print("before replacement", dataset.shape)
             dataset = dataset.drop(group.index, axis=0)
             dataset = pd.concat([dataset, group_preprocessed], axis=0)
-            print("after replacement", dataset.shape)
+            # print("after replacement", dataset.shape)
 
-            # dataset = dataset.loc[group.index, :] = group_preprocessed
             dataset = dataset.reset_index(drop=True)
-            print("after reset_index", dataset.shape)
+            # print("after reset_index", dataset.shape)
 
     return dataset
 
@@ -185,15 +181,15 @@ relationship_variables = [
 ]
 
 non_sensitive_variables = [
-    'hours-per-week',
+    'capital-gain',
     'education-num',
-    'capital-gain'
+    'hours-per-week',
 ]
 sensitive_variables = [
-    sex_variables,
+    race_variables,
     marital_status_variables,
     relationship_variables,
-    race_variables
+    sex_variables
 ]
 
 # do preprocessing
@@ -205,8 +201,10 @@ for sensitive in sensitive_variables:
         # print(adult_train.shape)
         # print(sum(adult_train.duplicated()))
 
-# now adult_train is preprocessed, and we can train the model
 
+print(sum(adult_train.duplicated()))
+
+# now adult_train is preprocessed, and we can train the model
 #%%
 train_X = adult_train.drop('income', axis=1)
 train_Y = adult_train['income']
@@ -229,7 +227,7 @@ from sklearn.ensemble import RandomForestClassifier
 model = RandomForestClassifier(max_depth=20, random_state=0)
 model.fit(train_X, train_Y)
 pred = model.predict(test_X)
-print(20, model.score(test_X, test_Y))
+print(i, model.score(test_X, test_Y))
 
 #%%
 importances = model.feature_importances_
@@ -273,6 +271,5 @@ print(cols)
 #%%
 df = pd.DataFrame(orig_prediction, columns=cols)
 print(df)
-
 #%%
 df.to_csv("predictions.csv", index=False)
