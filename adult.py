@@ -159,15 +159,21 @@ def preferential_resampling(dataset, s_names, x_name, y_name='income'):
 
             # print(group_preprocessed.index)
         
-    # TODO replace the original group in the dataset with the preprocessed group
-    # TODO problem with duplicate indices. We want to replace by index, but after that the df could be reindexed? not solved yet
+            # TODO replace the original group in the dataset with the preprocessed group
+            # TODO problem with duplicate indices. We want to replace by index, but after that the df could be reindexed? maybe solved
 
-    # dataset = dataset.loc[group_preprocessed.index, :] = group_preprocessed
-    # dataset = dataset.reset_index(drop=True)
+            print("before replacement", dataset.shape)
+            dataset = dataset.drop(group.index, axis=0)
+            dataset = pd.concat([dataset, group_preprocessed], axis=0)
+            print("after replacement", dataset.shape)
+
+            # dataset = dataset.loc[group.index, :] = group_preprocessed
+            dataset = dataset.reset_index(drop=True)
+            print("after reset_index", dataset.shape)
 
     return dataset
 
-
+#%%
 sex_variables = ['sex_ Male', 'sex_ Female']
 race_variables = [
     'race_ Amer-Indian-Eskimo', 
@@ -206,18 +212,16 @@ sensitive_variables = [
     race_variables
 ]
 
-# print(adult_train.shape)
-# print(sum(adult_train.duplicated()))
-# adult_train = adult_train.reset_index(drop=True)
-# print(sum(adult_train.duplicated()))
-
+# do preprocessing
 for sensitive in sensitive_variables:
     for non_sensitive in non_sensitive_variables:
+        print(sensitive, non_sensitive)
         adult_train = preferential_resampling(adult_train, sensitive, non_sensitive, 'income')
-    
-# print(adult_train.shape)
-# print(sum(adult_train.duplicated()))
+        
+        # print(adult_train.shape)
+        # print(sum(adult_train.duplicated()))
 
+# now adult_train is preprocessed, and we can train the model
 
 #%%
 
